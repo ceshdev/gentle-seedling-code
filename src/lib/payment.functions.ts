@@ -46,7 +46,13 @@ export const createPixQrCode = createServerFn({ method: "POST" })
     });
     const json = await res.json();
     if (!res.ok || json.error) {
-      throw new Error(`Abacate Pay: ${json.error?.message || json.message || res.status}`);
+      console.error("Abacate Pay error response:", JSON.stringify(json));
+      const msg =
+        json.error?.message ||
+        json.message ||
+        (typeof json.error === "string" ? json.error : null) ||
+        JSON.stringify(json);
+      throw new Error(`Abacate Pay ${res.status}: ${msg}`);
     }
     const d = json.data ?? json;
     return {
