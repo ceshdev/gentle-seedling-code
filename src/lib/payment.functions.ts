@@ -3,8 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 const API = "https://api.abacatepay.com/v1";
 
 export type PixStatus = {
-  status: "PENDING" | "PAID" | "EXPIRED" | "CANCELLED" | string;
-  [k: string]: unknown;
+  status: string;
 };
 
 export type PixQrCode = {
@@ -74,5 +73,5 @@ export const checkPixStatus = createServerFn({ method: "POST" })
       throw new Error(`Abacate Pay: ${json.error?.message || json.message || res.status}`);
     }
     const d = json.data ?? json;
-    return { status: d.status, ...d };
+    return { status: String(d.status ?? "PENDING") };
   });
