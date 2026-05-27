@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  seedDefaultProducts,
+  updateProductFn,
+  addProductFn,
+  removeProductFn,
+  decrementStockFn,
+} from "@/lib/products.functions";
 
 export type Brand = "ignite" | "elfbar" | "blacksheep";
 
