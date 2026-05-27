@@ -256,85 +256,119 @@ function useStorage<T>(key: string, fallback: T) {
 }
 
 export function useProducts() {
-  const [rawProducts, setProducts] = useStorage<Product[]>(PRODUCTS_KEY, defaultProducts);
-  // Migrate old products that lack flavorStock
-  const products = rawProducts.map((p) => {
-    const flavors = p.flavors && p.flavors.length > 0 ? p.flavors : [...DEFAULT_FLAVORS];
-    let flavorStock = p.flavorStock;
-    if (!flavorStock || Object.keys(flavorStock).length === 0) {
-      const perFlavor = Math.max(1, Math.floor(p.stock / flavors.length));
-      flavorStock = Object.fromEntries(flavors.map((f) => [f, perFlavor])) as Record<string, number>;
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const load = async () => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("position", { ascending: true });
+    if (error) {
+      console.error("loadProducts", error);
+      return;
     }
-    // Ensure every listed flavor has an entry
-    flavors.forEach((f) => {
-      if (flavorStock[f] === undefined) flavorStock[f] = 0;
-    });
-    return { ...p, flavors, flavorStock };
-  });
-
-  const persist = (next: Product[]) => {
-    write(PRODUCTS_KEY, next);
-    setProducts(next);
+    if (!data || data.length === 0) {
+      // Seed defaults on first run
+      try {
+        await seedDefaultProducts();
+      } catch (e) {
+        console.error("seedProducts", e);
+      }
+      const { data: d2 } = await supabase
+        .from("products")
+        .select("*")
+        .order("position", { ascending: true });
+      if (d2) setProducts(d2.map(mapRow));
+      return;
+    }
+    setProducts(data.map(mapRow));
   };
 
-  const updateProduct = (id: string, patch: Partial<Product>) => {
-    persist(products.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  };
-
-  const addStock = (id: string, amount: number) => {
-    persist(products.map((p) => (p.id === id ? { ...p, stock: Math.max(0, p.stock + amount) } : p)));
-  };
-
-  const addFlavorStock = (id: string, flavor: string, amount: number) => {
-    persist(
-      products.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              stock: Math.max(0, p.stock + amount),
-              flavorStock: { ...p.flavorStock, [flavor]: Math.max(0, (p.flavorStock[flavor] ?? 0) + amount) },
-            }
-          : p,
-      ),
-    );
-  };
-
-  const addProduct = (brand: Brand) => {
-    const idx = products.filter((p) => p.brand === brand).length + 1;
-    const newP: Product = {
-      id: `${brand}-pod-${Date.now()}`,
-      brand,
-      name: `Pod ${idx}`,
-      description: "Novo produto — edite os detalhes.",
-      price: 45,
-      image: "",
-      stock: 50,
-      flavors: [...DEFAULT_FLAVORS],
-      flavorStock: Object.fromEntries(DEFAULT_FLAVORS.map((f) => [f, 10])) as Record<string, number>,
+  useEffect(() => {
+    load();
+    const channel = supabase
+      .channel("products-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
     };
-    persist([...products, newP]);
+  }, []);
+
+  const updateProduct = async (id: string, patch: Partial<Product>) => {
+    // Optimistic
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    await updateProductFn({ data: { id, patch: patch as Record<string, unknown> } });
   };
 
-  const removeProduct = (id: string) => {
-    persist(products.filter((p) => p.id !== id));
+  const addStock = async (id: string, amount: number) => {
+    const current = products.find((p) => p.id === id);
+    if (!current) return;
+    const next = Math.max(0, current.stock + amount);
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stock: next } : p)));
+    await updateProductFn({ data: { id, patch: { stock: next } } });
   };
 
-  const decrementStockForCart = (cart: CartItem[]) => {
-    persist(
-      products.map((p) => {
-        const itemsForProduct = cart.filter((c) => c.productId === p.id);
-        const totalQty = itemsForProduct.reduce((s, c) => s + c.qty, 0);
-        if (totalQty === 0) return p;
-        const nextFlavorStock = { ...p.flavorStock };
-        itemsForProduct.forEach((c) => {
-          nextFlavorStock[c.flavor] = Math.max(0, (nextFlavorStock[c.flavor] ?? 0) - c.qty);
-        });
-        return { ...p, stock: Math.max(0, p.stock - totalQty), flavorStock: nextFlavorStock };
-      }),
+  const addFlavorStock = async (id: string, flavor: string, amount: number) => {
+    const current = products.find((p) => p.id === id);
+    if (!current) return;
+    const nextFlavorStock = {
+      ...current.flavorStock,
+      [flavor]: Math.max(0, (current.flavorStock[flavor] ?? 0) + amount),
+    };
+    const nextStock = Math.max(0, current.stock + amount);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, stock: nextStock, flavorStock: nextFlavorStock } : p)),
     );
+    await updateProductFn({
+      data: { id, patch: { stock: nextStock, flavorStock: nextFlavorStock } },
+    });
+  };
+
+  const addProduct = async (brand: Brand) => {
+    await addProductFn({ data: { brand } });
+    await load();
+  };
+
+  const removeProduct = async (id: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    await removeProductFn({ data: { id } });
+  };
+
+  const decrementStockForCart = async (cart: CartItem[]) => {
+    if (cart.length === 0) return;
+    await decrementStockFn({
+      data: { items: cart.map((c) => ({ productId: c.productId, flavor: c.flavor, qty: c.qty })) },
+    });
+    await load();
   };
 
   return { products, updateProduct, addStock, addFlavorStock, addProduct, removeProduct, decrementStockForCart };
+}
+
+function mapRow(row: any): Product {
+  const flavors: string[] =
+    Array.isArray(row.flavors) && row.flavors.length > 0 ? row.flavors : [...DEFAULT_FLAVORS];
+  const rawFs = (row.flavor_stock ?? {}) as Record<string, number>;
+  const flavorStock: Record<string, number> = {};
+  flavors.forEach((f) => {
+    flavorStock[f] = typeof rawFs[f] === "number" ? rawFs[f] : 0;
+  });
+  return {
+    id: row.id,
+    brand: row.brand as Brand,
+    name: row.name ?? "",
+    description: row.description ?? "",
+    price: Number(row.price ?? 0),
+    image: row.image ?? "",
+    stock: Number(row.stock ?? 0),
+    flavors,
+    flavorStock,
+  };
 }
 
 export function useCart() {
