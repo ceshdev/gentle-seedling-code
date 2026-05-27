@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          brand: string
+          created_at: string
+          description: string
+          flavor_stock: Json
+          flavors: Json
+          id: string
+          image: string
+          name: string
+          position: number
+          price: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          description?: string
+          flavor_stock?: Json
+          flavors?: Json
+          id: string
+          image?: string
+          name: string
+          position?: number
+          price?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          description?: string
+          flavor_stock?: Json
+          flavors?: Json
+          id?: string
+          image?: string
+          name?: string
+          position?: number
+          price?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
