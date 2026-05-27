@@ -256,11 +256,40 @@ function useStorage<T>(key: string, fallback: T) {
   return [value, setValue, hydrated] as const;
 }
 
+const DB_FLAVORS = ["Icy Mint", "Blueberry", "Strawberry", "Peach", "Watermelon"];
+
+async function seedIfEmpty() {
+  const { count, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true });
+  if (error || (count ?? 0) > 0) return;
+  const rows: any[] = [];
+  let pos = 0;
+  for (const brand of ["ignite", "elfbar", "blacksheep"]) {
+    for (const i of [1, 2, 3]) {
+      rows.push({
+        id: `${brand}-pod-${i}`,
+        brand,
+        name: `Pod ${i}`,
+        description: "Edite a descrição e adicione uma foto do produto.",
+        price: 45,
+        image: "",
+        stock: 50,
+        flavors: DB_FLAVORS,
+        flavor_stock: Object.fromEntries(DB_FLAVORS.map((f) => [f, 10])),
+        position: pos++,
+      });
+    }
+  }
+  await supabase.from("products").insert(rows as never);
+}
+
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const channelIdRef = useRef<string>(`products-sync-${Math.random().toString(36).slice(2)}`);
 
   const load = async () => {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("products")
       .select("*")
       .order("position", { ascending: true });
@@ -269,28 +298,22 @@ export function useProducts() {
       return;
     }
     if (!data || data.length === 0) {
-      // Seed defaults on first run
-      try {
-        await seedDefaultProducts();
-      } catch (e) {
-        console.error("seedProducts", e);
-      }
-      const { data: d2 } = await supabase
+      await seedIfEmpty();
+      const res = await supabase
         .from("products")
         .select("*")
         .order("position", { ascending: true });
-      if (d2) setProducts(d2.map(mapRow));
-      return;
+      data = res.data;
     }
-    setProducts(data.map(mapRow));
+    if (data) setProducts(data.map(mapRow));
   };
 
   useEffect(() => {
     load();
     const channel = supabase
-      .channel("products-sync")
+      .channel(channelIdRef.current)
       .on(
-        "postgres_changes",
+        "postgres_changes" as any,
         { event: "*", schema: "public", table: "products" },
         () => load(),
       )
@@ -298,12 +321,22 @@ export function useProducts() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const dbPatch = (patch: Partial<Product>): Record<string, unknown> => {
+    const out: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    for (const [k, v] of Object.entries(patch)) {
+      if (k === "flavorStock") out.flavor_stock = v;
+      else out[k] = v;
+    }
+    return out;
+  };
+
   const updateProduct = async (id: string, patch: Partial<Product>) => {
-    // Optimistic
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-    await updateProductFn({ data: { id, patch: patch as Record<string, unknown> } });
+    const { error } = await supabase.from("products").update(dbPatch(patch) as never).eq("id", id);
+    if (error) console.error("updateProduct", error);
   };
 
   const addStock = async (id: string, amount: number) => {
@@ -311,7 +344,7 @@ export function useProducts() {
     if (!current) return;
     const next = Math.max(0, current.stock + amount);
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stock: next } : p)));
-    await updateProductFn({ data: { id, patch: { stock: next } } });
+    await supabase.from("products").update({ stock: next, updated_at: new Date().toISOString() } as never).eq("id", id);
   };
 
   const addFlavorStock = async (id: string, flavor: string, amount: number) => {
@@ -325,26 +358,61 @@ export function useProducts() {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: nextStock, flavorStock: nextFlavorStock } : p)),
     );
-    await updateProductFn({
-      data: { id, patch: { stock: nextStock, flavorStock: nextFlavorStock } },
-    });
+    await supabase
+      .from("products")
+      .update({ stock: nextStock, flavor_stock: nextFlavorStock, updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
   };
 
   const addProduct = async (brand: Brand) => {
-    await addProductFn({ data: { brand } });
+    const maxPos = products.reduce((m, p: any) => Math.max(m, (p as any).position ?? 0), 0);
+    const row = {
+      id: `${brand}-pod-${Date.now()}`,
+      brand,
+      name: "Novo Pod",
+      description: "Novo produto — edite os detalhes.",
+      price: 45,
+      image: "",
+      stock: 50,
+      flavors: DB_FLAVORS,
+      flavor_stock: Object.fromEntries(DB_FLAVORS.map((f) => [f, 10])),
+      position: maxPos + 1,
+    };
+    const { error } = await supabase.from("products").insert(row as never);
+    if (error) console.error("addProduct", error);
     await load();
   };
 
   const removeProduct = async (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
-    await removeProductFn({ data: { id } });
+    await supabase.from("products").delete().eq("id", id);
   };
 
   const decrementStockForCart = async (cart: CartItem[]) => {
     if (cart.length === 0) return;
-    await decrementStockFn({
-      data: { items: cart.map((c) => ({ productId: c.productId, flavor: c.flavor, qty: c.qty })) },
-    });
+    const byProduct = new Map<string, { totalQty: number; perFlavor: Record<string, number> }>();
+    for (const it of cart) {
+      const entry = byProduct.get(it.productId) ?? { totalQty: 0, perFlavor: {} };
+      entry.totalQty += it.qty;
+      entry.perFlavor[it.flavor] = (entry.perFlavor[it.flavor] ?? 0) + it.qty;
+      byProduct.set(it.productId, entry);
+    }
+    for (const [id, agg] of byProduct.entries()) {
+      const current = products.find((p) => p.id === id);
+      if (!current) continue;
+      const nextFlavorStock = { ...current.flavorStock };
+      for (const [f, q] of Object.entries(agg.perFlavor)) {
+        nextFlavorStock[f] = Math.max(0, (nextFlavorStock[f] ?? 0) - q);
+      }
+      await supabase
+        .from("products")
+        .update({
+          stock: Math.max(0, current.stock - agg.totalQty),
+          flavor_stock: nextFlavorStock,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq("id", id);
+    }
     await load();
   };
 
