@@ -46,7 +46,7 @@ export const updateProductFn = createServerFn({ method: "POST" })
       if (k === "flavorStock") dbPatch.flavor_stock = v;
       else dbPatch[k] = v;
     }
-    const { error } = await supabaseAdmin.from("products").update(dbPatch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("products").update(dbPatch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
