@@ -25,6 +25,11 @@ const BRANDS: { id: Brand; label: string; tag: string }[] = [
   { id: "blacksheep", label: "BlackSheep", tag: "Premium" },
 ];
 
+function isDeliveryOff() {
+  const hour = new Date().getHours();
+  return hour >= 22 || hour < 7;
+}
+
 function Home() {
   const { products, updateProduct, addStock, addFlavorStock, addProduct, removeProduct } = useProducts();
   const { add, count } = useCart();
@@ -33,6 +38,7 @@ function Home() {
   const [active, setActive] = useState<Brand>("ignite");
 
   const filtered = products.filter((p) => p.brand === active);
+  const deliveryOff = isDeliveryOff();
 
   return (
     <div className="min-h-screen pb-24 relative overflow-hidden">
