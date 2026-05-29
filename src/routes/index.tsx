@@ -25,6 +25,11 @@ const BRANDS: { id: Brand; label: string; tag: string }[] = [
   { id: "blacksheep", label: "BlackSheep", tag: "Premium" },
 ];
 
+function isDeliveryOff() {
+  const hour = new Date().getHours();
+  return hour >= 22 || hour < 7;
+}
+
 function Home() {
   const { products, updateProduct, addStock, addFlavorStock, addProduct, removeProduct } = useProducts();
   const { add, count } = useCart();
@@ -33,6 +38,7 @@ function Home() {
   const [active, setActive] = useState<Brand>("ignite");
 
   const filtered = products.filter((p) => p.brand === active);
+  const deliveryOff = isDeliveryOff();
 
   return (
     <div className="min-h-screen pb-24 relative overflow-hidden">
@@ -116,8 +122,8 @@ function Home() {
             <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/15 blur-2xl" />
             <div className="absolute -left-6 -top-6 w-32 h-32 rounded-full bg-black/20 blur-2xl" />
             <span className="relative inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/90 bg-black/25 backdrop-blur px-2.5 py-1 rounded-full border border-white/15">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-              Entregando agora
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${deliveryOff ? "bg-red-500" : "bg-emerald-300"}`} />
+              {deliveryOff ? "Entregas off" : "Entregando agora"}
             </span>
             <h2 className="relative text-2xl font-bold text-primary-foreground leading-tight mt-3">
               Seu pod favorito,<br />entregue hoje.
