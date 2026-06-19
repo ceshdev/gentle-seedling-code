@@ -45,10 +45,10 @@ function Home() {
       <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full bg-primary/20 blur-[120px]" />
       <div aria-hidden className="pointer-events-none absolute top-40 -right-24 w-[380px] h-[380px] rounded-full bg-brand-glow/15 blur-[120px]" />
 
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/60 border-b border-border/60">
+      <header className="sticky top-0 z-40 bg-[var(--gradient-surface)] border border-border/70 rounded-b-2xl shadow-[var(--shadow-card)] mx-2 mt-2">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-10 h-10 rounded-2xl bg-[var(--gradient-brand)] flex items-center justify-center">
+            <div className="relative w-10 h-10 rounded-2xl bg-[var(--gradient-brand)] flex items-center justify-center shadow-[var(--shadow-glow)]">
               <Zap className="w-5 h-5 text-primary-foreground" />
               <span className="absolute inset-0 rounded-2xl ring-1 ring-white/20" />
             </div>
@@ -60,7 +60,7 @@ function Home() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+                className="bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
                 title="Painel admin"
               >
                 <Shield className="w-5 h-5" />
@@ -69,7 +69,7 @@ function Home() {
             {isCourier && (
               <Link
                 to="/entregador"
-                className="bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+                className="bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
                 title="Pedidos"
               >
                 <Bike className="w-5 h-5" />
@@ -78,7 +78,7 @@ function Home() {
             {user && !isAdmin && !isCourier && (
               <Link
                 to="/meus-pedidos"
-                className="bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+                className="bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
                 title="Meus pedidos"
               >
                 <Receipt className="w-5 h-5" />
@@ -87,7 +87,7 @@ function Home() {
             {user ? (
               <button
                 onClick={logout}
-                className="bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+                className="bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
                 title={`Sair (${user.name})`}
               >
                 <LogOut className="w-5 h-5" />
@@ -95,7 +95,7 @@ function Home() {
             ) : (
               <Link
                 to="/login"
-                className="bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+                className="bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
                 title="Entrar"
               >
                 <LogIn className="w-5 h-5" />
@@ -103,11 +103,11 @@ function Home() {
             )}
             <button
               onClick={() => setCartOpen(true)}
-              className="relative bg-secondary/70 backdrop-blur border border-border/70 p-2.5 rounded-xl hover:bg-accent transition"
+              className="relative bg-secondary/80 border border-border/70 p-2.5 rounded-xl hover:bg-accent hover:border-primary/40 transition shadow-sm"
             >
               <ShoppingBag className="w-5 h-5" />
               {count > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)]">
                   {count}
                 </span>
               )}
