@@ -15,11 +15,11 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     try {
-      const u = login(email, password);
+      const u = await login(email, password);
       if (u.role === "admin") navigate({ to: "/admin" });
       else if (u.role === "courier") navigate({ to: "/entregador" });
       else navigate({ to: "/" });

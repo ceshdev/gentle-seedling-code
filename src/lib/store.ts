@@ -495,12 +495,19 @@ export function useAuth() {
     setUser(u);
   };
 
-  const login = (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     const lower = email.toLowerCase().trim();
     const admin = getAdminCreds();
     if (lower === admin.email.toLowerCase()) {
       if (!password) throw new Error("Informe a senha.");
       if (password !== admin.password) throw new Error("E-mail ou senha inválidos.");
+      // Faz login no Supabase para que as policies RLS permitam editar produtos.
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email: lower, password });
+      if (signInErr) {
+        throw new Error(
+          "Admin não está cadastrado no Supabase Auth. Crie o usuário no painel Supabase (Authentication → Add user, auto-confirm) com este e-mail/senha e rode: INSERT INTO public.user_roles (user_id, role) SELECT id, 'admin' FROM auth.users WHERE email='" + lower + "';"
+        );
+      }
       const u: User = { name: "Admin", email: lower, role: "admin" };
       write(AUTH_KEY, u);
       setUser(u);
@@ -527,7 +534,8 @@ export function useAuth() {
     return u;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut().catch(() => {});
     write(AUTH_KEY, null);
     setUser(null);
   };
