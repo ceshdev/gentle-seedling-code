@@ -125,7 +125,7 @@ function Home() {
               <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${deliveryOff ? "bg-red-500" : "bg-emerald-300"}`} />
               {deliveryOff ? "Entregas off" : "Entregando agora"}
             </span>
-            <h2 className="relative text-2xl font-bold text-primary-foreground leading-tight mt-3">
+            <h2 className="relative text-2xl font-bold text-white leading-tight mt-3">
               Seu pod favorito,<br />entregue hoje.
             </h2>
           </div>
