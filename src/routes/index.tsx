@@ -52,7 +52,7 @@ function Home() {
               <Zap className="w-5 h-5 text-primary-foreground" />
               <span className="absolute inset-0 rounded-2xl ring-1 ring-white/20" />
             </div>
-            <h1 className="font-bold text-xl tracking-tight leading-none">
+            <h1 className="font-bold text-xl tracking-tight leading-none text-white">
               AZk<span className="text-brand-glow">pods</span>
             </h1>
           </div>
@@ -121,7 +121,7 @@ function Home() {
           <div className="rounded-3xl bg-[var(--gradient-brand)] p-6 relative overflow-hidden border border-white/10">
             <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/15 blur-2xl" />
             <div className="absolute -left-6 -top-6 w-32 h-32 rounded-full bg-black/20 blur-2xl" />
-            <span className="relative inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/90 bg-black/25 backdrop-blur px-2.5 py-1 rounded-full border border-white/15">
+            <span className="relative inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground bg-secondary/80 backdrop-blur px-2.5 py-1 rounded-full border border-border/70">
               <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${deliveryOff ? "bg-red-500" : "bg-emerald-300"}`} />
               {deliveryOff ? "Entregas off" : "Entregando agora"}
             </span>
