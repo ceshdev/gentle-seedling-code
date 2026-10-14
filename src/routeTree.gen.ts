@@ -9,37 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as EntregadorRouteImport } from './routes/entregador'
-import { Route as EntregadoresRouteImport } from './routes/entregadores'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeusPedidosRouteImport } from './routes/meus-pedidos'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as EntregadoresRouteImport } from './routes/entregadores'
+import { Route as EntregadorRouteImport } from './routes/entregador'
+import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as IndexRouteImport } from './routes/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastroRoute = CadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EntregadorRoute = EntregadorRouteImport.update({
-  id: '/entregador',
-  path: '/entregador',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EntregadoresRoute = EntregadoresRouteImport.update({
-  id: '/entregadores',
-  path: '/entregadores',
+const MeusPedidosRoute = MeusPedidosRouteImport.update({
+  id: '/meus-pedidos',
+  path: '/meus-pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -47,9 +27,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MeusPedidosRoute = MeusPedidosRouteImport.update({
-  id: '/meus-pedidos',
-  path: '/meus-pedidos',
+const EntregadoresRoute = EntregadoresRouteImport.update({
+  id: '/entregadores',
+  path: '/entregadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntregadorRoute = EntregadorRouteImport.update({
+  id: '/entregador',
+  path: '/entregador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -123,39 +123,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastro': {
-      id: '/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof CadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/entregador': {
-      id: '/entregador'
-      path: '/entregador'
-      fullPath: '/entregador'
-      preLoaderRoute: typeof EntregadorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/entregadores': {
-      id: '/entregadores'
-      path: '/entregadores'
-      fullPath: '/entregadores'
-      preLoaderRoute: typeof EntregadoresRouteImport
+    '/meus-pedidos': {
+      id: '/meus-pedidos'
+      path: '/meus-pedidos'
+      fullPath: '/meus-pedidos'
+      preLoaderRoute: typeof MeusPedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -165,11 +137,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/meus-pedidos': {
-      id: '/meus-pedidos'
-      path: '/meus-pedidos'
-      fullPath: '/meus-pedidos'
-      preLoaderRoute: typeof MeusPedidosRouteImport
+    '/entregadores': {
+      id: '/entregadores'
+      path: '/entregadores'
+      fullPath: '/entregadores'
+      preLoaderRoute: typeof EntregadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entregador': {
+      id: '/entregador'
+      path: '/entregador'
+      fullPath: '/entregador'
+      preLoaderRoute: typeof EntregadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
