@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-const API = "https://api.abacatepay.com/v1";
+const API = "https://api.abacatepay.com/v2";
 
 export type PixStatus = {
   status: string;
@@ -16,7 +16,7 @@ export type PixQrCode = {
 };
 
 function authHeader() {
-  const key = process.env.ABACATEPAY_API_KEY;
+  const key = process.env.ABACATEPAY_API_KEY?.trim();
   if (!key) throw new Error("ABACATEPAY_API_KEY ausente");
   return { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 }
@@ -34,14 +34,17 @@ export const createPixQrCode = createServerFn({ method: "POST" })
     return data;
   })
   .handler(async ({ data }): Promise<PixQrCode> => {
-    const res = await fetch(`${API}/pixQrCode/create`, {
+    const res = await fetch(`${API}/transparents/create`, {
       method: "POST",
       headers: authHeader(),
       body: JSON.stringify({
-        amount: data.amount,
-        expiresIn: 60 * 15,
-        description: data.description ?? "Pedido AZk pods",
-        customer: data.customer,
+        method: "PIX",
+        data: {
+          amount: data.amount,
+          expiresIn: 60 * 15,
+          description: data.description ?? "Pedido AZk pods",
+          customer: data.customer,
+        },
       }),
     });
     const json = await res.json();
@@ -71,7 +74,7 @@ export const checkPixStatus = createServerFn({ method: "POST" })
     return data;
   })
   .handler(async ({ data }): Promise<PixStatus> => {
-    const res = await fetch(`${API}/pixQrCode/check?id=${encodeURIComponent(data.id)}`, {
+    const res = await fetch(`${API}/transparents/check?id=${encodeURIComponent(data.id)}`, {
       headers: authHeader(),
     });
     const json = await res.json();
